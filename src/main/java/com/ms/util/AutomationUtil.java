@@ -6,6 +6,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.io.File;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class AutomationUtil {
 
@@ -56,15 +59,15 @@ public class AutomationUtil {
         // Aguardar até o input de arquivo ser adicionado ao DOM
         int attempts = 0;
         while (attempts < 10) { // Limitar a 10 tentativas
-//            try {
+            try {
                 // Usar um XPath para localizar o input de arquivo que deve aparecer após clicar em "anexar"
-            WebElement uploadInput = driver.findElement(By.cssSelector("input[multiple][type='file']"));
-            if (uploadInput != null) {
-                    return uploadInput; // Retorna o input se estiver visível
+                WebElement uploadInput = driver.findElement(By.cssSelector("input[multiple][type='file']"));
+                if (uploadInput != null) {
+                        return uploadInput; // Retorna o input se estiver visível
                 }
-//            } catch (NoSuchElementException e) {
-//                // O elemento ainda não está presente
-//            }
+            } catch (NoSuchElementException e) {
+                // O elemento ainda não está presente
+            }
             System.out.println("Aguardando input de arquivo...");
             Thread.sleep(3000); // Esperar 3 segundos antes de tentar de novo
             attempts++;
@@ -72,23 +75,30 @@ public class AutomationUtil {
         throw new RuntimeException("O input de arquivo não apareceu após várias tentativas.");
     }
 
-    public static void enviarArquivo(WebDriver driver, String caminhoArquivo) throws InterruptedException {
-        // Clicar no botão de anexar
-        WebElement attachButton = esperarBotaoAnexarClicavel(driver);
-        attachButton.click(); // Clica no botão de anexar
-        System.out.println("Botão de anexar clicado!");
+    public static void enviarListaArquivos(WebDriver driver, List<String> caminhoArquivo) throws InterruptedException {
 
-        // Esperar um tempo após o clique para o input de arquivo ser carregado
-        Thread.sleep(3000); // Pode ajustar esse tempo conforme necessário
+        for (int i = 0; i < caminhoArquivo.size(); i++) {
 
-        // Aguardar até o input de arquivo
-        WebElement uploadInput = esperarInputArquivoPresente(driver);
-        uploadInput.sendKeys(new File(caminhoArquivo).getAbsolutePath()); // Envia o arquivo
-        System.out.println("Arquivo carregado!");
+            // Clicar no botão de anexar
+            WebElement attachButton = esperarBotaoAnexarClicavel(driver);
+            attachButton.click(); // Clica no botão de anexar
+            System.out.println("Botão de anexar clicado!");
 
-        // Esperar até o botão de enviar a mensagem estar clicável
-        esperarBotaoEnviarMensagemClicavel(driver);
-        System.out.println("Arquivo enviado!");
+            // Esperar um tempo após o clique para o input de arquivo ser carregado
+            Thread.sleep(AutomationUtil.randomTimeBetween(500, 5000));
+
+            // Aguardar até o input de arquivo
+            WebElement uploadInput = esperarInputArquivoPresente(driver);
+            uploadInput.sendKeys(new File(caminhoArquivo.get(i)).getAbsolutePath()); // Envia o arquivo
+            System.out.println("Arquivo carregado!");
+
+            // Esperar até o botão de enviar a mensagem estar clicável
+            esperarBotaoEnviarMensagemClicavel(driver);
+            System.out.println("Arquivo enviado!");
+
+            // Garantir que a imagem foi enviada
+            Thread.sleep(AutomationUtil.randomTimeBetween(1000, 20000));
+        }
     }
 
 
@@ -108,5 +118,76 @@ public class AutomationUtil {
             }
             Thread.sleep(1000); // Espera 1 segundo antes de tentar novamente
         }
+    }
+
+    public static void enviarMensagem(WebDriver driver, String message) throws InterruptedException {
+
+
+        WebElement messageBox = AutomationUtil.caixaDeTextoVisivel(driver);
+        messageBox.sendKeys(message);
+
+        Thread.sleep(AutomationUtil.randomTimeBetween(1000, 20000));
+
+        WebElement sendButton = AutomationUtil.BotaoEnviarClicavel(driver);
+        sendButton.click();
+        Thread.sleep(AutomationUtil.randomTimeBetween(1000, 5000));
+    }
+
+    private static WebElement BotaoEnviarClicavel(WebDriver driver) {
+
+
+        try {
+
+            while (true) {
+                if (driver.findElement(By.xpath("//button[@aria-label='Enviar']")).isDisplayed())
+                    return driver.findElement(By.xpath("//button[@aria-label='Enviar']"));
+
+                else {
+                    System.out.println("Aguardando botão de enviar aparecer...");
+
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        } catch (NoSuchElementException e) {
+
+        }
+        return null;
+
+    }
+
+    private static WebElement caixaDeTextoVisivel(WebDriver driver) {
+
+
+        try {
+
+            while (true) {
+                if (driver.findElement(By.xpath("//div[@role='textbox' and @aria-placeholder='Digite uma mensagem']")).isDisplayed())
+                    return driver.findElement(By.xpath("//div[@role='textbox' and @aria-placeholder='Digite uma mensagem']"));
+
+                else {
+                    System.out.println("Aguardando caixa de texto aparecer...");
+
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        } catch (NoSuchElementException e) {
+
+        }
+        return null;
+
+    }
+
+    private static int randomTimeBetween(int min, int max) {
+        return ThreadLocalRandom.current().nextInt(min, max);
     }
 }
