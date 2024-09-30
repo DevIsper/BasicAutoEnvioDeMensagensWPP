@@ -7,7 +7,6 @@ import org.openqa.selenium.WebElement;
 
 import java.io.File;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class AutomationUtil {
@@ -61,7 +60,9 @@ public class AutomationUtil {
         while (attempts < 10) { // Limitar a 10 tentativas
             try {
                 // Usar um XPath para localizar o input de arquivo que deve aparecer após clicar em "anexar"
-                WebElement uploadInput = driver.findElement(By.cssSelector("input[multiple][type='file']"));
+                WebElement uploadInput = driver.findElement(By.xpath("//input[@type='file' and @accept='image/*,video/mp4,video/3gpp,video/quicktime']"));
+
+
                 if (uploadInput != null) {
                         return uploadInput; // Retorna o input se estiver visível
                 }
@@ -187,7 +188,61 @@ public class AutomationUtil {
 
     }
 
-    private static int randomTimeBetween(int min, int max) {
+    public static int randomTimeBetween(int min, int max) {
         return ThreadLocalRandom.current().nextInt(min, max);
     }
+
+    public static Boolean isNumeroInvalido(WebDriver driver) {
+
+        int max = 5;
+
+        try {
+
+            for (int i = 0; i < max; i++) {
+
+                Thread.sleep(randomTimeBetween(4000, 10000));
+
+                // Localiza o popup com a mensagem de "número de telefone inválido"
+                WebElement popup = driver.findElement(By.xpath("//div[text()='O número de telefone compartilhado por url é inválido.']"));
+
+                // Se o popup for encontrado e estiver visível, retorna true
+                if (popup.isDisplayed()) {
+                    System.out.println("Popup de número inválido detectado.");
+                    return true;
+                }
+            }
+
+
+        } catch (NoSuchElementException e) {
+
+            // Se o popup não for encontrado, retorna false
+            return false;
+        } catch (InterruptedException e) {
+
+        }
+
+        return false;
+    }
+
+
+    public static void clicarNoBotaoOk(WebDriver driver) {
+        try {
+            // Localiza o botão "OK" dentro do popup
+
+//            WebElement botaoOk = driver.findElement(By.xpath("//button//div[text()='OK']"));
+
+            WebElement botaoOk = driver.findElement(By.xpath("//button[.//div[text()='OK']]"));
+
+
+            // Verifica se o botão está visível e clica
+            if (botaoOk.isDisplayed()) {
+                botaoOk.click();
+                System.out.println("Botão OK foi clicado.");
+            }
+        } catch (NoSuchElementException e) {
+            // Se o botão "OK" não for encontrado
+            System.out.println("Botão OK não foi encontrado.");
+        }
+    }
+
 }
